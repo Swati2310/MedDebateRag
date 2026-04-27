@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip --version)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 *)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(pip show *)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}
