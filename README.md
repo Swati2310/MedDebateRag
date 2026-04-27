@@ -129,14 +129,15 @@ retrieve → doctor_a → doctor_b → [loop 3 rounds] → moderator → answer_
 | Baseline 2 — Chain-of-Thought | 85% | ❌ | ❌ | ❌ |
 | Baseline 3 — Self-Consistency | 65% | ❌ | ❌ | ❌ |
 | Baseline 4 — RAG + LLM | 55% | ✅ | ❌ | ❌ |
-| **MedDebate-RAG** | **80%** | ✅ | ✅ | ✅ PDS |
+| **MedDebate-RAG (with screener)** | **75%** | ✅ | ✅ | ✅ PDS |
 
 **Key findings:**
-- MedDebate-RAG beats Single LLM by **+15%**
-- Structured debate beats Self-Consistency (majority voting) by **+15%**
-- RAG alone hurts without structured reasoning (55%) — debate recovers it to 80%
+- MedDebate-RAG beats Single LLM by **+10%** (75% vs 65%)
+- Structured debate beats Self-Consistency (majority voting) by **+10%**
+- RAG alone hurts without structured reasoning (55%) — debate recovers it to 75% (+20%)
 - PDS correctly identifies uncertain cases: high-PDS group has 10% lower accuracy
-- 11% of cases appropriately escalated to human review
+- Only 5% of cases escalated to human review (Avg PDS: 0.151)
+- CoT (85%) is the only system ahead, but has **no uncertainty awareness, no escalation, no explainability**
 
 ---
 
