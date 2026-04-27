@@ -26,15 +26,15 @@ st.info(
 with st.sidebar:
     st.header("Settings")
     max_rounds     = st.slider("Debate Rounds", 1, 5, 3)
-    pds_threshold  = st.slider("Escalation Threshold", 0.1, 0.9, 0.3,
+    pds_threshold  = st.slider("Escalation Threshold", 0.05, 0.5, 0.15,
                                 help="PDS above this → escalate to human")
     use_finetuned  = st.checkbox("Use Fine-tuned Moderator (Llama)", value=False)
 
     st.markdown("---")
     st.markdown("**PDS Thresholds:**")
-    st.markdown("🟢 < 0.2 — High Confidence")
-    st.markdown("🟡 0.2-0.3 — Medium Confidence")
-    st.markdown("🔴 > 0.3 — Escalate to Human")
+    st.markdown("🟢 < 0.10 — High Confidence")
+    st.markdown("🟡 0.10-0.15 — Medium Confidence")
+    st.markdown("🔴 > 0.15 — Escalate to Human")
 
 # ── Patient Case Input ────────────────────────────────────────────────────────
 st.subheader("Patient Case Input")

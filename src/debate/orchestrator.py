@@ -9,7 +9,7 @@ from src.agents.option_screener import screen_options
 from src.uncertainty.pds import PositionDriftScore
 from src.hitl.escalation import decide_escalation
 
-PDS_THRESHOLD = 0.5
+PDS_THRESHOLD = 0.15
 
 # Lazy-loaded global retriever (initialised on first use)
 _retriever = None
