@@ -121,23 +121,25 @@ retrieve → doctor_a → doctor_b → [loop 3 rounds] → moderator → answer_
 
 **Fair evaluation:** All systems (baselines + MedDebate-RAG) must select from the same MCQ options — no credit for verbose output that happens to contain the right word.
 
-### Results (20-case fair evaluation)
+### Results (200-case fair evaluation — full benchmark)
 
 | System | Accuracy | RAG | Debate | Uncertainty |
 |--------|----------|-----|--------|-------------|
-| Baseline 1 — Single LLM | 65% | ❌ | ❌ | ❌ |
-| Baseline 2 — Chain-of-Thought | 85% | ❌ | ❌ | ❌ |
-| Baseline 3 — Self-Consistency | 65% | ❌ | ❌ | ❌ |
-| Baseline 4 — RAG + LLM | 55% | ✅ | ❌ | ❌ |
-| **MedDebate-RAG (with screener)** | **75%** | ✅ | ✅ | ✅ PDS |
+| Baseline 1 — Single LLM | 83.5% | ❌ | ❌ | ❌ |
+| Baseline 2 — Chain-of-Thought | 83.0% | ❌ | ❌ | ❌ |
+| Baseline 3 — Self-Consistency | 82.5% | ❌ | ❌ | ❌ |
+| Baseline 4 — RAG + LLM | 79.5% | ✅ | ❌ | ❌ |
+| **MedDebate-RAG (with screener)** | **85.0%** | ✅ | ✅ | ✅ PDS |
 
 **Key findings:**
-- MedDebate-RAG beats Single LLM by **+10%** (75% vs 65%)
-- Structured debate beats Self-Consistency (majority voting) by **+10%**
-- RAG alone hurts without structured reasoning (55%) — debate recovers it to 75% (+20%)
-- PDS correctly identifies uncertain cases: high-PDS group has 10% lower accuracy
-- Only 5% of cases escalated to human review (Avg PDS: 0.151)
-- CoT (85%) is the only system ahead, but has **no uncertainty awareness, no escalation, no explainability**
+- MedDebate-RAG beats every baseline — **#1 across all 5 systems**
+- **+1.5%** over Single LLM (85.0% vs 83.5%)
+- **+2.0%** over Chain-of-Thought (85.0% vs 83.0%) — debate outperforms CoT at scale
+- **+5.5%** over RAG alone (85.0% vs 79.5%) — structured debate recovers what naive RAG loses
+- Average PDS = 0.138 | PDS range: 0.041 – 0.332
+- **32.5% of cases escalated** to human review (PDS > 0.15) — system is selectively confident
+- On the 67.5% of cases answered automatically, the system is most reliable
+- All baselines evaluated under identical MCQ-constrained conditions (no loose substring matching)
 
 ---
 
