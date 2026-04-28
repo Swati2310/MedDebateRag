@@ -14,6 +14,7 @@ seaborn>=0.13.0
 plotly>=5.22.0
 streamlit>=1.35.0
 python-dotenv>=1.0.0
+fpdf2>=2.7.0
 tqdm>=4.66.0
 pydantic>=2.7.0
 requests

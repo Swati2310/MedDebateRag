@@ -1,3 +1,5 @@
+import re
+
 from langgraph.graph import StateGraph, END
 
 from src.debate.state import DebateState
@@ -8,6 +10,14 @@ from src.agents.answer_extractor import extract_final_answer
 from src.agents.option_screener import screen_options
 from src.uncertainty.pds import PositionDriftScore
 from src.hitl.escalation import decide_escalation
+
+
+def _parse_options(patient_case: str) -> dict:
+    """Extract {A: diagnosis_text, B: diagnosis_text, ...} from case."""
+    options = {}
+    for m in re.finditer(r"^\s*([A-D])[.)]\s*(.+)$", patient_case, re.MULTILINE):
+        options[m.group(1)] = m.group(2).strip()
+    return options
 
 PDS_THRESHOLD = 0.15
 
@@ -54,17 +64,37 @@ def format_full_transcript(state: DebateState) -> str:
 # ---------------------------------------------------------------------------
 
 def retrieve_node(state: DebateState) -> DebateState:
-    """RAG retrieval + option screening before debate starts."""
+    """RAG retrieval + option screening before debate starts.
+
+    Retrieval is targeted: after screening we know which diagnosis each
+    doctor will argue, so we search PubMed specifically for that diagnosis
+    rather than using a generic query for both doctors.
+    """
     retriever = _get_retriever()
     patient_case = state["patient_case"]
     question_part = patient_case.split("Answer options:")[0].strip()
-    query = question_part[-600:] if len(question_part) > 600 else question_part
-    state["retrieved_docs_a"] = retriever.format_for_prompt(query)
-    state["retrieved_docs_b"] = retriever.format_for_prompt(
-        query + " alternative diagnosis differential"
-    )
-    # Screen options — rank A/B/C/D by plausibility before debate starts
+    base_query = question_part[-600:] if len(question_part) > 600 else question_part
+
+    # Screen first — tells us which letter each doctor is assigned
     state["option_ranking"] = screen_options(patient_case)
+    ranking = state["option_ranking"]
+
+    # Parse the actual diagnosis text for each option
+    options = _parse_options(patient_case)
+
+    if options and len(ranking) >= 2:
+        # Targeted retrieval — each doctor searches for their specific diagnosis
+        a_diagnosis = options.get(ranking[0], "")
+        b_diagnosis = options.get(ranking[1], "")
+        query_a = f"{base_query} {a_diagnosis}".strip()
+        query_b = f"{base_query} {b_diagnosis}".strip()
+    else:
+        # Fallback for cases with no parsed options
+        query_a = base_query
+        query_b = base_query + " alternative diagnosis differential"
+
+    state["retrieved_docs_a"] = retriever.format_for_prompt(query_a)
+    state["retrieved_docs_b"] = retriever.format_for_prompt(query_b)
     return state
 
 
@@ -243,3 +273,28 @@ def run_debate(
     }
 
     return graph.invoke(initial_state)
+
+
+def run_debate_clinical(
+    patient_case: str,
+    max_rounds: int = 3,
+) -> dict:
+    """
+    Clinical mode — for free-text cases with no MCQ options.
+    Uses RAG to generate top 4 differential diagnoses, formats them
+    as A/B/C/D options, then runs the standard debate pipeline.
+    Returns the final state plus the generated differentials.
+    """
+    from src.agents.differential_generator import generate_differentials, build_clinical_case
+
+    retriever = _get_retriever()
+    query = patient_case[-600:] if len(patient_case) > 600 else patient_case
+    retrieved_docs = retriever.format_for_prompt(query)
+
+    differentials = generate_differentials(patient_case, retrieved_docs)
+    enriched_case = build_clinical_case(patient_case, differentials)
+
+    result = run_debate(enriched_case, ground_truth="", max_rounds=max_rounds)
+    result["generated_differentials"] = differentials
+    result["enriched_case"] = enriched_case
+    return result
