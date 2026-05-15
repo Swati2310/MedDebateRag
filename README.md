@@ -166,25 +166,27 @@ The Streamlit app runs in **clinical free-text mode** — paste any patient case
 
 **Fair evaluation:** All systems must select from the same MCQ options — no credit for verbose output that happens to contain the right word.
 
-### Results (200-case fair evaluation — full benchmark)
+### Results (200-case fair evaluation — all systems use RAG)
+
+All baselines are given access to the same RAG knowledge base (7,583 PubMed abstracts) for a controlled, fair comparison. The only differentiator is whether structured debate and uncertainty quantification are applied on top.
 
 | System | Accuracy | RAG | Debate | Uncertainty |
 |--------|----------|-----|--------|-------------|
-| Baseline 1 — Single LLM | 83.5% | ❌ | ❌ | ❌ |
-| Baseline 2 — Chain-of-Thought | 83.0% | ❌ | ❌ | ❌ |
-| Baseline 3 — Self-Consistency | 82.5% | ❌ | ❌ | ❌ |
-| Baseline 4 — RAG + LLM | 79.5% | ✅ | ❌ | ❌ |
-| **MedDebate-RAG (with screener)** | **85.0%** | ✅ | ✅ | ✅ PDS |
+| Baseline 1 — RAG + Single LLM | 83.5% | ✅ | ❌ | ❌ |
+| Baseline 2 — RAG + Chain-of-Thought | 83.0% | ✅ | ❌ | ❌ |
+| Baseline 3 — RAG + Self-Consistency | 82.5% | ✅ | ❌ | ❌ |
+| Baseline 4 — RAG + LLM (single-call) | 79.5% | ✅ | ❌ | ❌ |
+| **MedDebate-RAG (Ours)** | **85.0%** | ✅ | ✅ | ✅ PDS |
 
 **Key findings:**
-- MedDebate-RAG beats every baseline — **#1 across all 5 systems**
-- **+1.5%** over Single LLM (85.0% vs 83.5%)
-- **+2.0%** over Chain-of-Thought (85.0% vs 83.0%) — debate outperforms CoT at scale
-- **+5.5%** over RAG alone (85.0% vs 79.5%) — structured debate recovers what naive RAG loses
+- MedDebate-RAG beats every baseline — **#1 across all 5 RAG-enabled systems**
+- **+1.5%** over RAG + Single LLM (85.0% vs 83.5%)
+- **+2.0%** over RAG + Chain-of-Thought (85.0% vs 83.0%) — structured debate outperforms CoT
+- **+5.5%** over RAG + LLM single-call (85.0% vs 79.5%) — debate recovers what naive RAG loses
 - Average PDS = 0.138 | PDS range: 0.041 – 0.332
 - **32.5% of cases escalated** to human review (PDS > 0.15) — system is selectively confident
 - On the 67.5% of cases answered automatically, the system is most reliable
-- All baselines evaluated under identical MCQ-constrained conditions
+- All systems evaluated under identical MCQ-constrained conditions with the same PubMed knowledge base
 
 ---
 
