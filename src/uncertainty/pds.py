@@ -1,5 +1,19 @@
+import threading
+
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
+
+_embedder = None
+_embedder_lock = threading.Lock()
+
+
+def _get_embedder(model_name: str = "all-MiniLM-L6-v2") -> SentenceTransformer:
+    global _embedder
+    if _embedder is None:
+        with _embedder_lock:
+            if _embedder is None:
+                _embedder = SentenceTransformer(model_name)
+    return _embedder
 
 
 class PositionDriftScore:
@@ -29,7 +43,7 @@ class PositionDriftScore:
     """
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
-        self.embedder = SentenceTransformer(model_name)
+        self.embedder = _get_embedder(model_name)
         self.weights = {
             "confidence_drift":   0.35,
             "semantic_drift":     0.40,
@@ -55,10 +69,11 @@ class PositionDriftScore:
         if len(args_a) < 2 or len(args_b) < 2:
             return 0.0
 
-        emb_a_first = self.embedder.encode(args_a[0],  convert_to_tensor=True)
-        emb_a_last  = self.embedder.encode(args_a[-1], convert_to_tensor=True)
-        emb_b_first = self.embedder.encode(args_b[0],  convert_to_tensor=True)
-        emb_b_last  = self.embedder.encode(args_b[-1], convert_to_tensor=True)
+        with _embedder_lock:
+            emb_a_first = self.embedder.encode(args_a[0],  convert_to_tensor=True)
+            emb_a_last  = self.embedder.encode(args_a[-1], convert_to_tensor=True)
+            emb_b_first = self.embedder.encode(args_b[0],  convert_to_tensor=True)
+            emb_b_last  = self.embedder.encode(args_b[-1], convert_to_tensor=True)
 
         sim_a = util.cos_sim(emb_a_first, emb_a_last).item()
         sim_b = util.cos_sim(emb_b_first, emb_b_last).item()

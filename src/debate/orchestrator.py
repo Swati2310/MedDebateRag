@@ -69,27 +69,34 @@ def retrieve_node(state: DebateState) -> DebateState:
     Retrieval is targeted: after screening we know which diagnosis each
     doctor will argue, so we search PubMed specifically for that diagnosis
     rather than using a generic query for both doctors.
+
+    When state['skip_rag'] is True, only runs the option screener —
+    no retrieval — so doctors debate from case text alone.
     """
-    retriever = _get_retriever()
     patient_case = state["patient_case"]
+
+    # Always run option screener regardless of RAG flag
+    state["option_ranking"] = screen_options(patient_case)
+
+    if state.get("skip_rag", False):
+        # Debate-only mode: no PubMed retrieval
+        state["retrieved_docs_a"] = "No literature retrieved — debate from case text only."
+        state["retrieved_docs_b"] = "No literature retrieved — debate from case text only."
+        return state
+
+    retriever = _get_retriever()
     question_part = patient_case.split("Answer options:")[0].strip()
     base_query = question_part[-600:] if len(question_part) > 600 else question_part
 
-    # Screen first — tells us which letter each doctor is assigned
-    state["option_ranking"] = screen_options(patient_case)
     ranking = state["option_ranking"]
-
-    # Parse the actual diagnosis text for each option
     options = _parse_options(patient_case)
 
     if options and len(ranking) >= 2:
-        # Targeted retrieval — each doctor searches for their specific diagnosis
         a_diagnosis = options.get(ranking[0], "")
         b_diagnosis = options.get(ranking[1], "")
         query_a = f"{base_query} {a_diagnosis}".strip()
         query_b = f"{base_query} {b_diagnosis}".strip()
     else:
-        # Fallback for cases with no parsed options
         query_a = base_query
         query_b = base_query + " alternative diagnosis differential"
 
@@ -243,14 +250,16 @@ def run_debate(
     ground_truth: str,
     max_rounds: int = 3,
     use_finetuned: bool = False,
+    use_rag: bool = True,
 ) -> dict:
     graph = build_debate_graph()
 
     initial_state: DebateState = {
         "patient_case":            patient_case,
         "ground_truth":            ground_truth,
-        "retrieved_docs_a":        "",
-        "retrieved_docs_b":        "",
+        # When use_rag=False, pre-fill empty docs so retrieve_node is skipped
+        "retrieved_docs_a":        "" if use_rag else "No literature retrieved.",
+        "retrieved_docs_b":        "" if use_rag else "No literature retrieved.",
         "current_round":           0,
         "max_rounds":              max_rounds,
         "doctor_a_arguments":      [],
@@ -270,6 +279,7 @@ def run_debate(
         "escalate_to_human":       False,
         "escalation_reason":       None,
         "use_finetuned_moderator": use_finetuned,
+        "skip_rag":                not use_rag,
     }
 
     return graph.invoke(initial_state)

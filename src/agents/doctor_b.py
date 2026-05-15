@@ -70,4 +70,4 @@ def run_doctor_b(
     )
 
     text = generate(prompt, system=DOCTOR_B_SYSTEM, temperature=0.7)
-    return parse_agent_response(text)
+    return parse_agent_response(text or "")

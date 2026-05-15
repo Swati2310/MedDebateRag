@@ -44,3 +44,4 @@ class DebateState(TypedDict):
 
     # ── Meta ───────────────────────────────────────
     use_finetuned_moderator: bool
+    skip_rag:                bool   # when True, debate runs without PubMed retrieval

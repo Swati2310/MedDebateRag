@@ -66,11 +66,12 @@ def run_doctor_a(
     )
 
     text = generate(prompt, system=DOCTOR_A_SYSTEM, temperature=0.7)
-    return parse_agent_response(text)
+    return parse_agent_response(text or "")
 
 
 def parse_agent_response(text: str) -> dict:
     """Extract structured fields from agent response."""
+    text = text or ""
     result = {"raw": text}
 
     patterns = {
